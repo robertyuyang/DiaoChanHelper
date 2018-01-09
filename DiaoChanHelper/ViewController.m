@@ -18,18 +18,18 @@
 @property (nonatomic, strong) UILabel* titleLabel;
 //@property (nonatomic, strong)
 
-@property (nonatomic, strong) NSNumber* firstPower;
-@property (nonatomic, strong) NSNumber* secondPower;
-@property (nonatomic, strong) NSNumber* firstArmor;
-@property (nonatomic, strong) NSNumber* secondArmor;
+@property (nonatomic) int firstPower;
+@property (nonatomic) int secondPower;
+@property (nonatomic) int firstArmor;
+@property (nonatomic) int secondArmor;
 
-@property (nonatomic, assign) id currentInputing;
+@property (nonatomic) int* currentInputing;
 
 
-@property (nonatomic, strong) NSNumber* resultFirstPower;
-@property (nonatomic, strong) NSNumber* resultSecondPower;
-@property (nonatomic, strong) NSNumber* resultFirstArmor;
-@property (nonatomic, strong) NSNumber* resultSecondArmor;
+@property (nonatomic)  int resultFirstPower;
+@property (nonatomic) int resultSecondPower;
+@property (nonatomic) int resultFirstArmor;
+@property (nonatomic) int resultSecondArmor;
 @property (nonatomic) NSInteger income;
 
 @property (nonatomic) BOOL calced;
@@ -46,14 +46,14 @@
 
 - (void)clear {
     self.calced = NO;
-    self.firstPower = @(0);
-    self.firstArmor = @(0);
-    self.secondPower = @(0);
-    self.secondArmor = @(0);
-    self.currentInputing = (id)&_firstPower;
-    NSLog(@"%p,%p,%@,%@", self.currentInputing, self.firstPower,self.currentInputing, self.firstPower);
-    self.firstPower = @(2);
-    NSLog(@"%p,%p,%@,%@", self.currentInputing, self.firstPower,self.currentInputing, self.firstPower);
+    self.firstPower = 0;
+    self.firstArmor = 0;
+    self.secondPower = 0;
+    self.secondArmor = 0;
+    self.currentInputing = &_firstPower;
+    //NSLog(@"%p,%p,%@,%@", self.currentInputing, self.firstPower,self.currentInputing, self.firstPower);
+    //self.firstPower = 2;
+    //NSLog(@"%p,%p,%@,%@", self.currentInputing, self.firstPower,self.currentInputing, self.firstPower);
     
     self.displayLabel.str(@"0");
     [self updateDisplay];
@@ -61,15 +61,15 @@
 
 - (void)updateDisplay {
     if(!self.calced){
-        self.titleLabel.text = [NSString stringWithFormat:@"%@(%@) vs %@(%@)",
+        self.titleLabel.text = [NSString stringWithFormat:@"%d(%d) vs %d(%d)",
                               self.firstPower, self.firstArmor, self.secondPower, self.secondArmor];
-        self.displayLabel.text = [NSString stringWithFormat:@"%@", *self.currentInputing];
+        self.displayLabel.text = [NSString stringWithFormat:@"%d", *self.currentInputing];
     }
     else{
         
-        self.titleLabel.text = [NSString stringWithFormat:@"%@(%@) vs %@(%@) = %@(%@) vs %@(%@) ",
+        self.titleLabel.text = [NSString stringWithFormat:@"%d(%d) vs %d(%d) = %d(%d) vs %d(%d) ",
                               self.firstPower, self.firstArmor, self.secondPower, self.secondArmor,
-                              self.resultFirstPower, self.resultSecondPower, self.resultFirstArmor, self.resultSecondArmor
+                              self.resultFirstPower, self.resultFirstArmor, self.resultSecondPower, self.resultSecondArmor
                               ];
         self.displayLabel.text = [NSString stringWithFormat:@"%d", self.income];
     }
@@ -84,31 +84,33 @@
     self.income = 2;
    
     BOOL firstAttack = YES;
-    while ([self.resultFirstPower integerValue] != 0 && [self.resultSecondPower integerValue] != 0) {
-        NSNumber* attackPower = firstAttack ? self.firstPower : self.secondPower;
-        NSNumber* attackedPower = firstAttack ? self.secondPower : self.firstPower;
-        NSNumber* attackedArmor = firstAttack ? self.secondArmor : self.firstArmor;
+    while (self.resultFirstPower != 0 && self.resultSecondPower != 0) {
+        int attackPower = firstAttack ? self.resultFirstPower : self.resultSecondPower;
+        int* attackedPower = firstAttack ? &_resultSecondPower : &_resultFirstPower;
+        int* attackedArmor = firstAttack ? &_resultSecondArmor : &_resultFirstArmor;
         
-        NSInteger attackPowerNum = [attackPower integerValue];
-        NSInteger attackedArmorNum = [attackedArmor integerValue];
-        NSInteger attackedPowerNum = [attackedPower integerValue];
+        int attackPowerNum = attackPower;
+        int attackedArmorNum = *attackedArmor;
+        int attackedPowerNum = *attackedPower;
+        
         if(attackPowerNum <= attackedArmorNum){
-            attackedArmor = @(attackedArmorNum - attackPowerNum);
+            *attackedArmor = attackedArmorNum - attackPowerNum;
         }
         else{
-            attackedArmor = @(0);
+            *attackedArmor = 0;
             attackPowerNum -= attackedArmorNum;
             if(attackedPowerNum >= attackPowerNum){
-                attackedPower = @(attackedPowerNum - attackPowerNum);
+                *attackedPower = attackedPowerNum - attackPowerNum;
                 self.income += attackPowerNum;
             }
             else{
-                attackedPower = @(0);
+                *attackedPower = 0;
                 self.income += attackedPowerNum;
             }
         }
         
         firstAttack = !firstAttack;
+        NSLog(@"%d(%d) vs %d(%d) - %d", self.resultFirstPower, self.resultFirstArmor, self.resultSecondPower, self.resultSecondArmor, self.income);
     }
     
     self.calced = YES;
@@ -122,7 +124,7 @@
     CGFloat topPartHeight = 250;
     UIView* bgView = View.bgColor(@"black").addTo(self.view);
     self.displayLabel = Label.fnt(50).str("0").bgColor(@"black").color(@"white").rightAlignment.addTo(bgView);
-    self.titleLabel = Label.fnt(35).str("please input").bgColor(@"black").color(@"white").addTo(bgView);
+    self.titleLabel = Label.fnt(25).str("please input").bgColor(@"black").color(@"white").addTo(bgView);
  
     [bgView mas_makeConstraints:^(MASConstraintMaker *make) {
         make.left.top.right.equalTo(self.view);
@@ -169,15 +171,17 @@
         }];
         
         [button bk_addEventHandler:^(id sender) {
-            UIButton* senderButton = (UIButton*)sender;
-            NSInteger num = senderButton.tag;
-            if(wSelf.currentInputing){
-                *wSelf.currentInputing = @([*wSelf.currentInputing integerValue] * 10 + num);
-            }
             if(wSelf.calced){
                 wSelf.calced = NO;
                 [wSelf clear];
             }
+            
+            UIButton* senderButton = (UIButton*)sender;
+            int num = senderButton.tag;
+            if(wSelf.currentInputing){
+                *wSelf.currentInputing = *wSelf.currentInputing * 10 + num;
+            }
+            
             [wSelf updateDisplay];
         } forControlEvents:UIControlEventTouchUpInside];
         
@@ -203,11 +207,11 @@
         make.top.mas_equalTo(topPartHeight);
     }];
     [armorButton bk_addEventHandler:^(id sender) {
-        if(*self.currentInputing == self.firstPower){
-            *self.currentInputing = self.firstArmor;
+        if(self.currentInputing == &_firstPower){
+            self.currentInputing = &_firstArmor;
         }
-        if(*self.currentInputing == self.secondPower){
-            *self.currentInputing = self.secondArmor;
+        if(self.currentInputing == &_secondPower){
+            self.currentInputing = &_secondArmor;
         }
         [wSelf updateDisplay];
     } forControlEvents:UIControlEventTouchUpInside];
@@ -220,7 +224,7 @@
         make.top.mas_equalTo(topPartHeight + buttonHeight);
     }];
     [vsButton bk_addEventHandler:^(id sender) {
-        *wSelf.currentInputing = wSelf.secondPower;
+        wSelf.currentInputing = &_secondPower;
         [wSelf updateDisplay];
     } forControlEvents:UIControlEventTouchUpInside];
     
